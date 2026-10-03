@@ -1,0 +1,22 @@
+
+[7m[1m[36m RUN [39m[22m[27m [36mv1.6.1[39m [90mC:/Users/Sayak Satpathi/OneDrive/Desktop/Cloudflare Edge & Serverless Platform[39m
+
+ [32m✓[39m tests/unit/errors.test.ts [2m ([22m[2m9 tests[22m[2m)[22m[90m 3[2mms[22m[39m
+ [32m✓[39m tests/unit/rate-limiter.test.ts [2m ([22m[2m5 tests[22m[2m)[22m[90m 9[2mms[22m[39m
+ [32m✓[39m tests/unit/cache.test.ts [2m ([22m[2m3 tests[22m[2m)[22m[90m 4[2mms[22m[39m
+ [32m✓[39m tests/unit/job-state.test.ts [2m ([22m[2m8 tests[22m[2m)[22m[90m 5[2mms[22m[39m
+ [32m✓[39m tests/security/security.test.ts [2m ([22m[2m8 tests[22m[2m)[22m[90m 8[2mms[22m[39m
+ [32m✓[39m tests/unit/utils.test.ts [2m ([22m[2m22 tests[22m[2m)[22m[90m 11[2mms[22m[39m
+ [32m✓[39m tests/integration/middleware.test.ts [2m ([22m[2m12 tests[22m[2m)[22m[90m 17[2mms[22m[39m
+[90mstdout[2m | tests/integration/middleware.test.ts[2m > [22m[2mResponse helpers[2m > [22m[2merrorResponse handles unknown error as 500[22m[39m
+{"timestamp":"2026-10-03T13:47:06.473Z","level":"error","request_id":"req_test","event":"unhandled_error","error":"unexpected"}
+
+ [32m✓[39m tests/integration/auth.test.ts [2m ([22m[2m6 tests[22m[2m)[22m[90m 71[2mms[22m[39m
+ [32m✓[39m tests/e2e/e2e.test.ts [2m ([22m[2m9 tests[22m[2m)[22m[90m 77[2mms[22m[39m
+ [32m✓[39m tests/unit/crypto.test.ts [2m ([22m[2m9 tests[22m[2m)[22m[90m 162[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m10 passed[39m[22m[90m (10)[39m
+[2m      Tests [22m [1m[32m91 passed[39m[22m[90m (91)[39m
+[2m   Start at [22m 19:17:05
+[2m   Duration [22m 746ms[2m (transform 511ms, setup 1ms, collect 1.04s, tests 367ms, environment 3ms, prepare 2.25s)[22m
+
