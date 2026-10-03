@@ -1,0 +1,8 @@
+# Copy this file to .dev.vars for local development
+# Never commit .dev.vars to version control
+
+# Secret key for signing JWT tokens (min 32 chars)
+JWT_SECRET=your-super-secret-jwt-key-minimum-32-characters-long
+
+# Admin API key for internal endpoints
+ADMIN_API_KEY=your-admin-api-key-here

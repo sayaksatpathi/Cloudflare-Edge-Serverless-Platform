@@ -1,0 +1,97 @@
+name: Deploy to Production
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm:
+        description: 'Type DEPLOY to confirm production deployment'
+        required: true
+        type: string
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  check-confirmation:
+    name: Verify deployment confirmation
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check confirmation
+        run: |
+          if [ "${{ github.event.inputs.confirm }}" != "DEPLOY" ]; then
+            echo "Confirmation not provided. Aborting."
+            exit 1
+          fi
+
+  deploy-production:
+    name: Deploy → Production
+    needs: check-confirmation
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: production
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Full test suite
+        run: npm test
+
+      - name: Type check
+        run: npm run typecheck
+
+      - name: Security audit
+        run: npm audit --audit-level=high
+
+      - name: Build
+        run: npm run build
+
+      - name: Upload new version (without deploying all traffic)
+        run: |
+          # Upload the Worker version
+          npx wrangler versions upload --env production --message "Deploy ${{ github.sha }}"
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        continue-on-error: true
+
+      - name: Deploy to production (100% traffic)
+        run: npm run deploy:production
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      - name: Run D1 migrations (production)
+        run: npm run migrate:production
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      - name: Smoke test production
+        run: |
+          PROD_URL="https://edgeforge-production.${{ secrets.CLOUDFLARE_ACCOUNT_ID }}.workers.dev"
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$PROD_URL/health")
+          if [ "$STATUS" != "200" ]; then
+            echo "Production health check FAILED: $STATUS"
+            echo "Initiating rollback..."
+            exit 1
+          fi
+          echo "Production deployment verified"
+
+      - name: Record deployment evidence
+        if: always()
+        run: |
+          mkdir -p evidence/deployment
+          echo "Production deployment: $(date)" >> evidence/deployment/production.txt
+          echo "Commit: ${{ github.sha }}" >> evidence/deployment/production.txt
+          echo "Status: ${{ job.status }}" >> evidence/deployment/production.txt

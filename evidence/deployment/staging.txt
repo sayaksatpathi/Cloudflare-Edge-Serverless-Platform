@@ -1,0 +1,13 @@
+EdgeForge Staging Deployment Evidence
+=====================================
+Status: NOT EXECUTED
+Reason: Cloudflare credentials required
+Action: Configure CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID in GitHub Secrets
+        then push to main branch to trigger automated staging deployment.
+
+Configuration validated:
+  - wrangler.jsonc (staging env defined)
+  - deploy-staging.yml workflow configured
+  - Smoke tests configured
+
+When deployed, evidence will be appended here automatically.

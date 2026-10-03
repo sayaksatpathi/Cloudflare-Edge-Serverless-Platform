@@ -1,0 +1,79 @@
+name: Deploy to Staging
+
+on:
+  push:
+    branches: [main]
+
+concurrency:
+  group: deploy-staging
+  cancel-in-progress: false
+
+jobs:
+  deploy-staging:
+    name: Deploy → Staging
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment: staging
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type check
+        run: npm run typecheck
+
+      - name: Unit tests
+        run: npm run test:unit
+
+      - name: Integration tests
+        run: npm run test:integration
+
+      - name: Security tests
+        run: npm run test:security
+
+      - name: Build (dry run)
+        run: npm run build
+
+      - name: Deploy to staging
+        run: npm run deploy:staging
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      - name: Run D1 migrations (staging)
+        run: npm run migrate:staging
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      - name: Smoke test staging
+        run: |
+          STAGING_URL="https://edgeforge-staging.${{ secrets.CLOUDFLARE_ACCOUNT_ID }}.workers.dev"
+          echo "Testing: $STAGING_URL"
+          # Health check
+          STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$STAGING_URL/health")
+          if [ "$STATUS" != "200" ]; then
+            echo "Health check failed: $STATUS"
+            exit 1
+          fi
+          echo "Staging health check passed"
+
+          # Version endpoint
+          curl -sf "$STAGING_URL/api/version" | grep version
+        continue-on-error: false
+
+      - name: Record deployment evidence
+        if: success()
+        run: |
+          echo "Staging deployment: $(date)" >> evidence/deployment/staging.txt
+          echo "Commit: ${{ github.sha }}" >> evidence/deployment/staging.txt
+          echo "Status: SUCCESS" >> evidence/deployment/staging.txt
